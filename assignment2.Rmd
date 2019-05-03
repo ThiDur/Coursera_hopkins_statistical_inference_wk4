@@ -1,0 +1,74 @@
+---
+title: "Coursera hopkins statistical inference"
+author: "TD"
+date: "02 May 2019"
+---
+# Settings
+Setting up the enviroment
+```{r setting up the environment, echo=TRUE}
+rm(list=ls())
+library(ggplot2)
+library(dplyr)
+```
+
+# Data loading
+Loading the data from ToothGrowth and inserting it into a tibble. In the tibble a new category (combination of supp and dose) is added.
+```{r loading data, echo=TRUE}
+df_tooth_growth <-  ToothGrowth
+
+tbl_tooth_growth <- as_tibble(df_tooth_growth)
+rm(df_tooth_growth)
+tbl_tooth_growth <- mutate(tbl_tooth_growth, supplement_dose = paste(supp, dose, sep=', '))
+```
+
+# Data analysis
+
+Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
+State your conclusions and the assumptions needed for your conclusions.
+First the data is summarized showing that the tibble is of size 60 x 4. It contains four data categories (length, supp, dose and supplement_dose). The len has a min of 4.2 and a max of 33.9. The dose has a min of 0.5, a max of 2 and a median of 1.
+
+```{r summarizing data, echo=TRUE}
+dim(tbl_tooth_growth)
+head(tbl_tooth_growth)
+summary(tbl_tooth_growth)
+
+```
+The data appearantly has growth length for teeth with  growth supplement (vitamine C) of two suppliers and three doses. The growth rate differences per dose are shown before.
+```{r dose impact, echo=TRUE}
+boxplot(tbl_tooth_growth$len ~ tbl_tooth_growth$supplement_dose)
+```
+
+And below it is seen what influence the doses from different suppliers have on the teeth growth.
+```{r dose impact per supplier, echo=TRUE}
+ggplot(data=tbl_tooth_growth, aes(x=dose, y=len)) +
+    geom_point(aes(color=supp))
+```
+
+Then the hypothesis is tested that OJ is better than VC for a dose of 0.5. The p value is 0.003 which is lower than a 5% confidence interval and we therefore concluded that OJ is indeed better than VC (e.g. stronger teeth growth) for a dose of 0.5
+```{r test hypothesis that OJ is better than VC for dose 0.5, echo=TRUE}
+tbl_oj_5 <- filter(tbl_tooth_growth, dose==0.5, supp=='OJ')
+tbl_vc_5 <- filter(tbl_tooth_growth, dose==0.5, supp=='VC')
+t.test(tbl_oj_5$len, tbl_vc_5$len, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.05)$p.value
+```
+
+Next the hypothesis is tested that OJ is better than VC for a dose of 1.0. The p value is 0.0005 which is lower than a 5% confidence interval and we therefore concluded that OJ is indeed better than VC (e.g. stronger teeth growth) for a dose of 1.0
+```{r test hypothesis that OJ is better than VC for dose 1.0, echo=TRUE}
+tbl_oj_10 <- filter(tbl_tooth_growth, dose==1.0, supp=='OJ')
+tbl_vc_10 <- filter(tbl_tooth_growth, dose==1.0, supp=='VC')
+t.test(tbl_oj_10$len, tbl_vc_10$len, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.05)$p.value
+```
+Finally the hypothesis is tested that OJ is better than VC for a dose of 2.0. The p value is 0.5 which is higher than a 5% confidence interval and we therefore fail to reject the 0-hypothesis (e.g. VC is better than OJ) for a dose of 1.0
+```{r test hypothesis that OJ is better than VC for dose 2.0, echo=TRUE}
+tbl_oj_20 <- filter(tbl_tooth_growth, dose==2.0, supp=='OJ')
+tbl_vc_20 <- filter(tbl_tooth_growth, dose==2.0, supp=='VC')
+t.test(tbl_oj_20$len, tbl_vc_20$len, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.05)$p.value
+```
+Now we compare teeth growth for a dose of 0.5 with a dose of 1.0 and a dose of 1.0 with a dose of 2.0.
+It is seen that the confidence intervals for the hypothesis that a dose of 1.0 is better than a dose of 0.5 which has a p-value of 6e-8 and is therefore confirmed. The hypothesis that a dose of 2.0 is better than a dose of 1.0 has a p-value of 1e-5 and is therefore confirmed.
+```{r higher dose is better than lower dose}
+tbl_5 <- filter(tbl_tooth_growth, dose==0.5)
+tbl_10 <- filter(tbl_tooth_growth, dose==1.0)
+tbl_20 <- filter(tbl_tooth_growth, dose==2.0)
+t.test(tbl_10$len, tbl_5$len, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.05)$p.value
+t.test(tbl_20$len, tbl_10$len, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.05)$p.value
+```

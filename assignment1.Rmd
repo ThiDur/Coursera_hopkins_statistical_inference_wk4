@@ -1,0 +1,106 @@
+---
+title: "Coursera hopkins statistical inference"
+author: "TD"
+date: "02 May 2019"
+---
+
+# Overview
+In this report the central limit theorem is tested by comparing the histograms of 1000 simulations of exponential distributions containing 40 observations each. The mean and variances are compared to the theoretical means and variances and are shown to be very close (absolute relative error of 0.01% and 2.5% respectively). The close approximation of the theoretical normal distribution are also visually shown.
+
+# Simulations
+
+Loading the ggplot2 and dplyr libraries. Removing all variabls in the global environemnt
+```{r setting up the environment, echo=TRUE}
+rm(list=ls())
+library(ggplot2)
+library(dplyr)
+```
+
+
+Setting the paramters
+```{r defining parameters, echo=TRUE}
+lambda <- 0.2
+n_exponentials <- 40
+dist_mean <- 1/ lambda
+dist_std <- 1 / lambda / sqrt(n_exponentials)
+```
+
+Making the theoretical distribution from a normal distribution with 1000 samples.
+```{r make reference normal distribution, echo=TRUE}
+hist(
+    rnorm(1000, mean=dist_mean, sd=dist_std),
+    freq=FALSE,
+    main="Reference distribution with 1000 samples",
+    xlab='Value',
+    ylab='Density')
+
+```
+Now the reference plot can be compared with a plot of the means of 1000 exponential distributions of 40 samples. The expected mean of the distribution is indicated with a red vertical line. 
+```{r make experimental distribution, echo=TRUE}
+mns = NULL
+for (i in 1 : 1000) mns = c(mns, mean(rexp(n_exponentials, lambda)))
+hist(
+    mns,
+    freq=FALSE,
+    main='Distribution of means of 1000 exponential distributions of 40 samples \nwith a red line at the mean',
+    xlab='mean value',
+    ylab='Density'
+    )
+abline(v=1 / lambda, col="red", lwd=4)
+```
+
+The simularities between the sampled normal distribution and the distribution of means can clearly be seen.
+
+## Sample Mean versus Theoretical Mean
+Now the theoretical mean of the distribution of means can be compared to the theoretical mean and the relative error can be calculated. The difference is shown to be only 0.01%..
+```{r compare means, echo=TRUE}
+sample_mean <- mean(mns)
+theoretical_mean <- 1 / lambda 
+print(paste0("Sample mean is ", sample_mean))
+print(paste0("Theoretical mean is ", theoretical_mean))
+relative_error_in_sample_mean <- (sample_mean - theoretical_mean) / theoretical_mean
+print(paste0("Relative error in sample mean is ", scales::percent(relative_error_in_sample_mean)))
+```
+
+## Sample Variance versus Theoretical Variance
+Next the theoretical variance can be compared to the true variance of the distributuion of means. The difference is shown to be only 2.5%.
+```{r compare variance, echo=TRUE}
+sample_variance <- var(mns)
+theoretical_sd <- (1 / lambda) / sqrt(n_exponentials)
+theoretical_variance <- theoretical_sd ^ 2
+print(paste0("Sample variance is ", sample_variance))
+print(paste0("Theoretical variance is ", theoretical_variance))
+relative_error_in_sample_variance <- (sample_variance - theoretical_variance) / theoretical_variance
+print(paste0("Relative error in sample variance is ", scales::percent(relative_error_in_sample_variance)))
+```
+
+The true and theoretical variances are shown in the figure below (true in green, theoretical in red). It can be seen that the theoretical variance is sligthly larger than the true variance.
+```{r show variance , echo=TRUE}
+mns = NULL
+for (i in 1 : 1000) mns = c(mns, mean(rexp(n_exponentials, lambda)))
+hist(
+    mns,
+    freq=FALSE,
+    main='Indication of true and theoretical variances (green and red resp.) \nin the histogram of means',
+    xlab='mean value',
+    ylab='Density' )
+abline(v=sample_mean + sample_variance, col="green", lwd=2)
+abline(v=sample_mean - sample_variance, col="green", lwd=2)
+abline(v=theoretical_mean + theoretical_variance, col="red", lwd=2)
+abline(v=theoretical_mean - theoretical_variance, col="red", lwd=2)
+```
+## Distribution
+In the figure below the distribution of means is compared to the theoretical normal distribution it should approximate. The distribution of means is shown to follow the theoreticla distribution closely.
+```{r plot wrt normal dist, echo=TRUE}
+p <- ggplot() +
+    geom_histogram(
+        aes(mns, y=..density..)
+        ) +
+    geom_line(
+        aes(seq(2, 8, length.out = 100), dnorm(seq(2, 8, length.out = 100) , mean=dist_mean, sd=dist_std)
+    )) +
+    ggtitle('Comparision between histogram of means and theoretical normal distribution') +
+    xlab('mean value') +
+    ylab('Density')
+print(p)
+```
